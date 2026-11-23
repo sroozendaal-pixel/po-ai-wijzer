@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PO AI-wijzer</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1f2328;--muted:#5b6370;--line:#e2e0d8;--acc:#1d6b5c;--acc2:#e8f2ef;--warn:#b5651d;--bad:#a83232;--ok:#2e7d4f}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.7rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 20px}
+.steps{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.steps span{flex:1;min-width:90px;text-align:center;font-size:.8rem;padding:6px 4px;border-radius:6px;background:#eceae3;color:var(--muted)}
+.steps span.on{background:var(--acc);color:#fff}
+.steps span.done{background:var(--acc2);color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:16px}
+h2{font-size:1.2rem;margin:0 0 6px}
+.hint{color:var(--muted);font-size:.92rem;margin:0 0 16px}
+label{display:block;font-weight:600;margin:14px 0 6px;font-size:.95rem}
+input[type=text],select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+textarea{min-height:80px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+.q{padding:12px 0;border-bottom:1px solid var(--line)}
+.q:last-child{border:0}
+.q p{margin:0 0 8px}
+.yn{display:flex;gap:8px}
+.yn button{flex:0 0 auto}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#fff;padding:8px 14px}
+button.sel{background:var(--acc);color:#fff;border-color:var(--acc)}
+.nav{display:flex;justify-content:space-between;margin-top:18px}
+.primary{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+.phase{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.phase .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.lv{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.lv button{padding:6px 10px;font-size:.85rem}
+.lvdesc{font-size:.85rem;color:var(--muted);margin-top:6px}
+.legend{display:grid;gap:6px;font-size:.88rem;margin-bottom:14px}
+.legend div{padding:6px 10px;border-radius:6px;background:#f3f2ed}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer}
+.chk input{margin-top:4px}
+.chk.rec{border-color:var(--acc);background:var(--acc2)}
+.tag{font-size:.72rem;background:var(--acc);color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px}
+.meter{height:12px;background:#eceae3;border-radius:6px;overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%}
+.out{white-space:pre-wrap;background:#fbfaf7;border:1px solid var(--line);border-radius:8px;padding:14px;font-size:.93rem}
+.copyrow{display:flex;gap:8px;margin:8px 0 18px;align-items:center}
+.ok{color:var(--ok);font-size:.88rem}
+h3{font-size:1rem;margin:18px 0 6px}
+ul{margin:4px 0 0 18px;padding:0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>PO AI-wijzer</h1>
+<p class="sub">Maak je praktische opdracht bestand tegen ongewenst AI-gebruik en bepaal zelf hoeveel AI je leerlingen mogen gebruiken. Aan het eind krijg je een advies en een kant-en-klare tekst voor in je opdracht.</p>
+
+<div class="steps" id="steps"></div>
+
+<!-- Stap 1 -->
+<section class="card step" data-s="0">
+<h2>1. Over je opdracht</h2>
+<p class="hint">Een paar basisgegevens. Die gebruiken we in het advies en in de tekst voor leerlingen.</p>
+<div class="row">
+<div><label>Vak</label><input type="text" id="vak" placeholder="bijv. aardrijkskunde"></div>
+<div><label>Klas / niveau</label><input type="text" id="klas" placeholder="bijv. 5 havo"></div>
+</div>
+<label>Titel van de opdracht</label><input type="text" id="titel" placeholder="bijv. Veldwerk verstedelijking in onze wijk">
+<label>Soort opdracht</label>
+<select id="soort">
+<option>Werkstuk / verslag</option><option>Onderzoek / practicum</option><option>Veldwerk</option><option>Presentatie / pitch</option><option>Ontwerp / product</option><option>Betoog / essay</option><option>Portfolio</option><option>Anders</option>
+</select>
+<label>Wat leveren leerlingen nu in? (kort)</label>
+<textarea id="product" placeholder="bijv. een verslag van 6 pagina's met kaarten en conclusie"></textarea>
+<div class="nav"><span></span><button class="primary" onclick="go(1)">Volgende</button></div>
+</section>
+
+<!-- Stap 2 -->
+<section class="card step hidden" data-s="1">
+<h2>2. Kwetsbaarheidscheck</h2>
+<p class="hint">Beantwoord eerlijk. Hoe meer 'ja', hoe makkelijker AI het werk kan overnemen.</p>
+<div id="qs"></div>
+<div class="nav"><button onclick="go(0)">Terug</button><button class="primary" onclick="go(2)">Volgende</button></div>
+</section>
+
+<!-- Stap 3 -->
+<section class="card step hidden" data-s="2">
+<h2>3. Hoeveel AI mag er?</h2>
+<p class="hint">Kies per fase van de opdracht het toegestane niveau. Niet relevant? Kies 'n.v.t.'.</p>
+<div class="legend" id="legend"></div>
+<div id="phases"></div>
+<div class="nav"><button onclick="go(1)">Terug</button><button class="primary" onclick="go(3)">Volgende</button></div>
+</section>
+
+<!-- Stap 4 -->
+<section class="card step hidden" data-s="3">
+<h2>4. Maatregelen</h2>
+<p class="hint">Op basis van je antwoorden zijn de <b>aanbevolen</b> maatregelen al aangevinkt. Pas aan wat bij jouw opdracht past.</p>
+<div id="measures"></div>
+<div class="nav"><button onclick="go(2)">Terug</button><button class="primary" onclick="go(4)">Bekijk advies</button></div>
+</section>
+
+<!-- Stap 5 -->
+<section class="card step hidden" data-s="4">
+<h2>5. Advies en tekst voor je opdracht</h2>
+<div id="result"></div>
+<div class="nav"><button onclick="go(3)">Terug</button><button onclick="restart()">Opnieuw beginnen</button></div>
+</section>
+</div>
+
+<script>
+const STEPNAMES=["Opdracht","Check","AI-niveau","Maatregelen","Advies"];
+const QUESTIONS=[
+ {id:"prompt",t:"Kan een chatbot het eindproduct (grotendeels) maken met één of enkele prompts?",w:3},
+ {id:"eind",t:"Beoordeel je vooral het eindproduct, en weinig of niet het proces?",w:3},
+ {id:"thuis",t:"Wordt het grootste deel thuis of buiten het zicht van de docent gemaakt?",w:2},
+ {id:"alg",t:"Is het onderwerp algemeen, dus niet gekoppeld aan eigen waarnemingen, de eigen omgeving of de lessen?",w:2},
+ {id:"tekst",t:"Bestaat het eindproduct vooral uit geschreven tekst?",w:2},
+ {id:"mond",t:"Ontbreekt een mondeling moment waarop de leerling keuzes moet toelichten?",w:2},
+ {id:"bron",t:"Kunnen leerlingen volstaan met informatie die online makkelijk te vinden is?",w:1}
+];
+const LEVELS=[
+ {n:"0",k:"Geen AI",d:"AI mag niet gebruikt worden. Dit gebeurt bij voorkeur in de les."},
+ {n:"1",k:"Ideeën",d:"AI mag alleen helpen bij brainstormen en het verkennen van het onderwerp. Niets van AI komt in het product."},
+ {n:"2",k:"Ondersteuning",d:"AI mag helpen bij structuur, uitleg of feedback. De inhoud schrijft de leerling zelf."},
+ {n:"3",k:"Samenwerken",d:"AI mag stukken maken, maar de leerling bewerkt, controleert en verantwoordt alles."},
+ {n:"4",k:"Vrij",d:"AI mag vrij gebruikt worden, mits verantwoord en kritisch gecontroleerd."}
+];
+const PHASES=[
+ {id:"orient",n:"Oriëntatie en onderzoeksvraag",def:1},
+ {id:"bronnen",n:"Bronnen en informatie zoeken",def:2},
+ {id:"data",n:"Data verzamelen / uitvoeren (meten, veldwerk, interviews)",def:0},
+ {id:"analyse",n:"Analyse en conclusies",def:1},
+ {id:"schrijf",n:"Schrijven / maken van het eindproduct",def:2},
+ {id:"taal",n:"Taal, opmaak en vormgeving",def:3}
+];
+const MEASURES=[
+ {id:"lokaal",t:"Eigen context",d:"Koppel de opdracht aan eigen waarnemingen, de eigen omgeving, eigen metingen of lesmateriaal.",trig:["alg","bron","prompt"],adv:"Maak de opdracht specifiek: eigen data, de eigen wijk/school/situatie of materiaal uit de les. AI heeft daar geen toegang toe."},
+ {id:"logboek",t:"Logboek / procesverslag",d:"Leerlingen houden bij wat ze wanneer gedaan hebben, inclusief keuzes en problemen.",trig:["eind","thuis"],adv:"Laat leerlingen een logboek bijhouden en neem het proces mee in de beoordeling."},
+ {id:"tussen",t:"Tussenproducten en feedbackmomenten",d:"Plan 2–3 momenten waarop leerlingen tussenversies laten zien.",trig:["eind","thuis","prompt"],adv:"Bouw vaste tussenmomenten in. Dan zie je het werk groeien en valt een plotseling 'perfect' eindproduct op."},
+ {id:"mondeling",t:"Mondelinge verantwoording",d:"Kort gesprek (5–10 min) waarin de leerling keuzes en resultaten uitlegt.",trig:["mond","tekst","prompt"],adv:"Plan een kort verantwoordingsgesprek. Wie het werk niet zelf gemaakt heeft, kan het meestal niet goed uitleggen."},
+ {id:"klas",t:"Kernonderdelen in de les",d:"Cruciale stappen (bijv. analyse of conclusie) gebeuren in de les, onder toezicht.",trig:["thuis"],adv:"Laat de kern van de opdracht in de les maken, zodat je ziet wat de leerling zelf kan."},
+ {id:"vorm",t:"Ander eindproduct dan alleen tekst",d:"Bijv. kaart, model, poster, pitch, vlog, schets of tentoonstelling.",trig:["tekst"],adv:"Vervang (een deel van) de tekst door een product dat minder makkelijk door AI te maken is, zoals een zelfgemaakte kaart, model of presentatie."},
+ {id:"aikritisch",t:"AI bewust inzetten",d:"Leerlingen beoordelen of verbeteren een AI-antwoord en leveren hun prompts in.",trig:["prompt","bron"],adv:"Maak AI onderdeel van de opdracht: laat leerlingen een AI-antwoord kritisch controleren met eigen bronnen of data."},
+ {id:"verantw",t:"AI-verantwoording verplicht",d:"Leerlingen vermelden welke AI-tool ze waarvoor gebruikt hebben (en leveren de prompts in).",trig:[],adv:"Vraag een korte AI-verantwoording als bijlage."},
+ {id:"rubric",t:"Beoordelingsmodel aanpassen",d:"Geef punten voor proces, eigen inbreng, reflectie en mondelinge toelichting.",trig:["eind"],adv:"Pas het beoordelingsmodel aan zodat proces, eigen data en reflectie zwaarder wegen dan de perfecte eindtekst."}
+];
+let st={step:0,ans:{},lv:{},ms:{},touchedMs:false};
+PHASES.forEach(p=>st.lv[p.id]=p.def);
+
+function renderSteps(){document.getElementById("steps").innerHTML=STEPNAMES.map((n,i)=>`<span class="${i==st.step?'on':i<st.step?'done':''}">${i+1}. ${n}</span>`).join("")}
+function go(s){
+ if(s==3&&!st.touchedMs)autoMeasures();
+ if(s==3)renderMeasures();
+ if(s==4)renderResult();
+ st.step=s;document.querySelectorAll(".step").forEach(e=>e.classList.toggle("hidden",+e.dataset.s!==s));renderSteps();window.scrollTo(0,0)}
+function renderQs(){document.getElementById("qs").innerHTML=QUESTIONS.map(q=>`<div class="q"><p>${q.t}</p><div class="yn">
+<button class="${st.ans[q.id]===true?'sel':''}" onclick="setA('${q.id}',true)">Ja</button>
+<button class="${st.ans[q.id]===false?'sel':''}" onclick="setA('${q.id}',false)">Nee</button></div></div>`).join("")}
+function setA(id,v){st.ans[id]=v;renderQs()}
+function renderLegend(){document.getElementById("legend").innerHTML=LEVELS.map(l=>`<div><b>Niveau ${l.n} – ${l.k}:</b> ${l.d}</div>`).join("")}
+function renderPhases(){document.getElementById("phases").innerHTML=PHASES.map(p=>{const v=st.lv[p.id];return `<div class="phase"><div class="top"><b>${p.n}</b></div><div class="lv">
+${LEVELS.map((l,i)=>`<button class="${v===i?'sel':''}" onclick="setL('${p.id}',${i})">${l.n} ${l.k}</button>`).join("")}
+<button class="${v===-1?'sel':''}" onclick="setL('${p.id}',-1)">n.v.t.</button></div>
+<div class="lvdesc">${v>=0?LEVELS[v].d:'Deze fase komt in de opdracht niet voor.'}</div></div>`}).join("")}
+function setL(id,v){st.lv[id]=v;renderPhases()}
+function triggered(m){return m.trig.some(t=>st.ans[t]===true)}
+function autoMeasures(){MEASURES.forEach(m=>st.ms[m.id]=triggered(m));
+ const anyAI=Object.values(st.lv).some(v=>v>=1);if(anyAI)st.ms.verantw=true}
+function renderMeasures(){document.getElementById("measures").innerHTML=MEASURES.map(m=>{const rec=triggered(m)||(m.id=="verantw"&&Object.values(st.lv).some(v=>v>=1));
+ return `<label class="chk ${rec?'rec':''}"><input type="checkbox" ${st.ms[m.id]?'checked':''} onchange="st.ms['${m.id}']=this.checked;st.touchedMs=true"><span><b>${m.t}</b>${rec?'<span class="tag">aanbevolen</span>':''}<br><span style="color:var(--muted);font-size:.9rem">${m.d}</span></span></label>`}).join("")}
+function val(id){return document.getElementById(id).value.trim()}
+function score(){let s=0,max=0;QUESTIONS.forEach(q=>{max+=q.w;if(st.ans[q.id])s+=q.w});return Math.round(s/max*100)}
+function riskLabel(r){return r>=60?["Hoog","var(--bad)"]:r>=30?["Gemiddeld","var(--warn)"]:["Laag","var(--ok)"]}
+
+function studentText(){
+ const vak=val("vak")||"[vak]",titel=val("titel")||"deze praktische opdracht";
+ let t=`AI-gebruik bij ${titel}\n\n`;
+ t+=`Bij deze opdracht mag je AI-tools (zoals ChatGPT, Copilot of Gemini) alleen gebruiken zoals hieronder staat. Per onderdeel staat wat wel en niet mag.\n\n`;
+ PHASES.forEach(p=>{const v=st.lv[p.id];if(v<0)return;
+  const l=LEVELS[v];t+=`• ${p.n}: niveau ${l.n} (${l.k.toLowerCase()})\n  ${studentLevel(v)}\n`});
+ const ms=MEASURES.filter(m=>st.ms[m.id]);
+ if(ms.length){t+=`\nWat we van je vragen:\n`;
+  ms.forEach(m=>{const s=studentMeasure(m.id);if(s)t+=`• ${s}\n`})}
+ t+=`\nTwijfel je of iets mag? Vraag het dan vooraf aan je docent ${vak}.\n`;
+ t+=`Gebruik je AI op een manier die niet is toegestaan, of vermeld je AI-gebruik niet? Dan geldt dit als fraude en handelen we volgens het examenreglement / PTA.`;
+ return t}
+function studentLevel(v){return["Je gebruikt geen AI. Je doet dit volledig zelf.",
+ "Je mag AI gebruiken om ideeën op te doen of het onderwerp te verkennen. Je neemt geen tekst of resultaten van AI over in je werk.",
+ "Je mag AI gebruiken voor uitleg, structuur of feedback. De inhoud bedenk en schrijf je zelf.",
+ "Je mag AI delen laten maken, maar je controleert, bewerkt en verbetert alles zelf. Je moet alles kunnen uitleggen.",
+ "Je mag AI vrij gebruiken. Je controleert alle informatie zelf en bent verantwoordelijk voor de juistheid."][v]}
+function studentMeasure(id){return{
+ lokaal:"Je gebruikt je eigen waarnemingen, gegevens of de lesstof als basis. Algemene informatie van internet of AI is niet genoeg.",
+ logboek:"Je houdt een logboek bij: wat heb je wanneer gedaan, welke keuzes heb je gemaakt en waarom?",
+ tussen:"Je levert tussenproducten in op de afgesproken momenten. Zonder tussenproducten wordt het eindproduct niet beoordeeld.",
+ mondeling:"Je licht je werk mondeling toe in een kort gesprek. Daarin leg je je keuzes en resultaten uit. Dit telt mee voor je cijfer.",
+ klas:"Een aantal onderdelen maak je in de les. Die kun je niet thuis vooraf voorbereiden met AI.",
+ vorm:"Je eindproduct bestaat niet alleen uit tekst, maar ook uit [kaart / model / presentatie / poster].",
+ aikritisch:"Je beoordeelt een antwoord van AI kritisch: wat klopt er wel en niet? Je onderbouwt dit met eigen bronnen of gegevens.",
+ verantw:"Je voegt een AI-verantwoording toe: welke tool heb je gebruikt, waarvoor, en welke prompts heb je gegeven?",
+ rubric:"In de beoordeling tellen ook je werkproces, je eigen inbreng en je reflectie mee."}[id]}
+
+function renderResult(){
+ const r=score(),[rl,rc]=riskLabel(r);
+ const vak=val("vak"),klas=val("klas"),titel=val("titel")||"je opdracht",soort=val("soort");
+ const unanswered=QUESTIONS.filter(q=>st.ans[q.id]===undefined).length;
+ const ms=MEASURES.filter(m=>st.ms[m.id]);
+ const missing=MEASURES.filter(m=>triggered(m)&&!st.ms[m.id]);
+ const lvs=PHASES.filter(p=>st.lv[p.id]>=0);
+ const high=lvs.filter(p=>st.lv[p.id]>=3);
+ let h=`<p><b>${titel}</b>${vak||klas?` – ${[vak,klas].filter(Boolean).join(", ")}`:""} (${soort.toLowerCase()})</p>`;
+ h+=`<h3>Kwetsbaarheid voor AI (zonder maatregelen): <span style="color:${rc}">${rl}</span></h3><div class="meter"><i style="width:${r}%;background:${rc}"></i></div>`;
+ if(unanswered)h+=`<p class="hint">Let op: ${unanswered} vraag/vragen uit de check zijn niet beantwoord.</p>`;
+ h+=`<h3>Advies</h3><ul>`;
+ if(r>=60)h+=`<li>AI kan op dit moment een groot deel van de opdracht overnemen. Pas de opdracht aan voordat je hem uitdeelt.</li>`;
+ else if(r>=30)h+=`<li>De opdracht is deels kwetsbaar. Met een paar gerichte maatregelen wordt hij een stuk sterker.</li>`;
+ else h+=`<li>De opdracht is al vrij goed bestand tegen ongewenst AI-gebruik. Maak de afspraken over AI wel duidelijk.</li>`;
+ ms.forEach(m=>h+=`<li>${m.adv}</li>`);
+ if(high.length&&st.ans.eind)h+=`<li>Je staat bij ${high.map(p=>p.n.toLowerCase()).join(", ")} veel AI toe, maar beoordeelt vooral het eindproduct. Beoordeel dan vooral hoe de leerling met AI heeft gewerkt (controle, keuzes, verantwoording).</li>`;
+ if(st.lv.data===0||st.lv.analyse===0)h+=`<li>Voor fasen met niveau 0 is controle alleen echt mogelijk als dit in de les gebeurt. Plan daar lestijd voor in.</li>`;
+ h+=`</ul>`;
+ if(missing.length)h+=`<h3>Overweeg ook</h3><ul>${missing.map(m=>`<li><b>${m.t}</b>: ${m.d}</li>`).join("")}</ul>`;
+ h+=`<h3>Kant-en-klare tekst voor in je opdracht</h3><p class="hint">Je kunt de tekst hieronder direct aanpassen. Vervang daarna wat tussen [ ] staat en kopieer de tekst naar je opdracht.</p>
+ <textarea id="txt" class="out" style="min-height:360px;width:100%">${esc(studentText())}</textarea>
+ <div class="copyrow"><button class="primary" onclick="copyTxt('txt')">Kopieer tekst</button><span id="cp_txt" class="ok"></span></div>
+ <h3>Adviesoverzicht voor jezelf / de sectie</h3>
+ <textarea id="adv" class="out" style="min-height:200px;width:100%">${esc(adviceText(r,rl,ms,missing))}</textarea>
+ <div class="copyrow"><button onclick="copyTxt('adv')">Kopieer advies</button><span id="cp_adv" class="ok"></span></div>`;
+ document.getElementById("result").innerHTML=h}
+function adviceText(r,rl,ms,missing){
+ let t=`Advies AI-bestendigheid – ${val("titel")||"praktische opdracht"} (${[val("vak"),val("klas")].filter(Boolean).join(", ")})\n`;
+ t+=`Kwetsbaarheid zonder maatregelen: ${rl} (${r}%)\n\nToegestaan AI-niveau per fase:\n`;
+ PHASES.forEach(p=>{const v=st.lv[p.id];t+=`- ${p.n}: ${v<0?"n.v.t.":"niveau "+v+" ("+LEVELS[v].k.toLowerCase()+")"}\n`});
+ t+=`\nGekozen maatregelen:\n`+(ms.length?ms.map(m=>`- ${m.t}`).join("\n"):"- geen")+"\n";
+ if(missing.length)t+=`\nNog te overwegen:\n`+missing.map(m=>`- ${m.t}`).join("\n")+"\n";
+ return t}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function copyTxt(id){const v=document.getElementById(id).value;
+ navigator.clipboard.writeText(v).then(()=>{document.getElementById("cp_"+id).textContent="Gekopieerd!"}).catch(()=>{const e=document.getElementById(id);e.select();document.getElementById("cp_"+id).textContent="Tekst geselecteerd, druk Ctrl+C."})}
+function restart(){st={step:0,ans:{},lv:{},ms:{},touchedMs:false};PHASES.forEach(p=>st.lv[p.id]=p.def);
+ document.querySelectorAll("input[type=text],textarea").forEach(e=>e.value="");renderQs();renderPhases();go(0)}
+renderSteps();renderQs();renderLegend();renderPhases();
+</script>
+</body>
+</html>
